@@ -3,6 +3,11 @@
 ## 方法总结
 [参考文档](https://blog.csdn.net/Amanda_wmy/article/details/80524475)
 > 判断数据类型 ==>  Object.prototype.toString.call(null) ==> [object Null] ==>  可以用在深拷贝、遍历等上
+
+> 深拷贝 
+```js
+arr = JSON.parse(JSON.stringify(arr))
+```
 ### 数组
 > - 数组转成字符串 : arr.join("") 、arr.toString()
 > - arr.push(); //向后添加，返回新数组个数 ,原数组是添加后的数组 
@@ -471,8 +476,8 @@ f()
 当这个变量指向其他一个时该值的引用次数便减一。当该值引用次数为0时就会被回收。
 
 ### localStorage、sessionStorage、Cookie的区别及用法
+
 ### 原生节点操作
-### git 命令
 ### rem和px
 ### 正则
 ### for循环
@@ -583,6 +588,25 @@ hash 模式下，仅 hash 符号之前的内容会被包含在请求中，如 ht
 > - `Mutation` : 唯一改变 store 的计算属性; 有一个字符串的事件类型（type） 和回调函数（handler），回调函数状态更改的地方，并且 state 作为第一个参数; store.commit 的方法调用 mutation; 是同步方法
 > - `Action` : Action 提交的mutation，而不是直接变更状态；Action 可以包含任意异步操作；Action 可以通过 store.dispath 方法触发
 > - `Module` : 所有状态集中在一起非常臃肿，所以允许 store 分割模块。`modules = { state: { ... }, mutations: { ... }, actions: { ... }, getters: { ... } } `
+```js
+const moduleA = {
+  state: { ... },
+  mutations: { ... },
+  actions: { ... },
+  getters: { ... }
+ }
+const moduleB = {
+  state: { ... },
+  mutations: { ... },
+  actions: { ... }
+ }
+
+const store = new Vuex.Store({
+  modules: {
+    a: moduleA,
+    b: moduleB
+})
+```
 
 ```js
 // 将仓库分离出 => stroe.js ,在main.js中引入、挂载
@@ -671,7 +695,72 @@ export default store
 > 组件系统、单向数据流、操作虚拟DOM、JSX 语法、数据驱动、函数式编程
 > 1. react最核心的思想是将页面中任何一个区域或者元素都可以看做一个组件 component
 > - 我一般通过es6的class定义类的来声明组件(分治，方便管理，减少耦合、复用，提高效率，性能)
+> 2. 虚拟DOM : 
+> - 我们以前操作dom的方式是通过`document.getElementById()`的方式，这样的过程实际上是先去读取html的dom结构，将结构转换成变量，再进行操作。
+而react.js定义了一套变量形式的dom模型，一切操作和换算直接在变量中，这样减少了操作真实dom，性能真实相当的高，和主流MVC框架有本质的区别，并不和dom打交道
 
+## 构建组件
+
+```js
+//引入react模块
+import React, { Component } from 'react'
+//引入redux模块
+import { connect } from 'react-redux'
+let Lemon = class Lemon extends Component {
+    constructor(props) {
+        super(props)
+        this.props = props
+        this.state = {
+            author: "Xie"
+        }
+    }
+    setAuthor(e) {
+        this.setState({
+            author: e.target.value
+        })
+    }
+    // toHomePage(){
+    //     // 编程式导航
+    //     this.props.history.push('/')
+    //     // 编程式导航本质上就是对location方法的封装
+    //     // location.href
+    // }
+    render() {
+        return (
+            <div>
+                Lemon
+                <p>{this.props.age}</p>
+                <input onChange={this.setAuthor.bind(this)} />
+                <button onClick={this.props.setAuthor.bind(this)}>lemon更改仓库中author的值</button>
+            </div>
+        )
+    }
+}
+// 如果不使用react-redux的这个connect方法，那么Lemon组件就是不能够获取仓库的值
+// 调用connect方法，建立Lemon组件和仓库之间的关系
+export default connect(
+    // 获取仓库里面的state，并把它拿到Lemon组件的这个函数里面
+    // 它就会把仓库state的值挂载到props上  ==> 不会对组件本身的state 产生覆盖
+    (state) => {
+        console.log(state)
+        return state
+    },
+    (dispatch) => {
+        return {
+            setAuthor() {
+                //该this 指向该组件 ==> 触发函数时用了bind改变了this的指向
+                console.log(this)
+                // dispatch的参数是个对象，对应store里面的那个action
+                dispatch({
+                    // 对应switch里面的case
+                    type: "setAuthor",
+                    author: this.state.author
+                })
+            }
+        }
+    }
+)(Lemon)
+```
 
 ## Redux
 > Redux 实现了跨组件通信和逻辑分层
@@ -773,6 +862,75 @@ export default connent(
 
 # 微信小程序
 
+## 生命周期及基本事件
+
+> - onLoad	            生命周期回调—监听页面加载
+> - onShow	            生命周期回调—监听页面显示
+> - onReady	            生命周期回调—监听页面初次渲染完成
+> - onHide	            生命周期回调—监听页面隐藏
+> - onUnload	        生命周期回调—监听页面卸载
+> - onPullDownRefresh	监听用户下拉动作
+> - onReachBottom	    页面上拉触底事件的处理函数
+> - onShareAppMessage	用户点击右上角转发
+> - onPageScroll	    页面滚动触发事件的处理函数
+> - onResize	        页面尺寸改变时触发，详见 响应显示区域变化
+> - onTabItemTap	    当前是 tab 页时，点击 tab 时触发
+```js
+// index.js
+Page({
+  data: {
+    text: 'This is page data.'
+  },
+  onLoad(options) {
+    // Do some initialize when page load.
+  },
+  onReady() {
+    // Do something when page ready.
+  },
+  onShow() {
+    // Do something when page show.
+  },
+  onHide() {
+    // Do something when page hide.
+  },
+  onUnload() {
+    // Do something when page close.
+  },
+  onPullDownRefresh() {
+    // Do something when pull down.
+  },
+  onReachBottom() {
+    // Do something when page reach bottom.
+  },
+  onShareAppMessage() {
+    // return custom share data when user share.
+  },
+  onPageScroll() {
+    // Do something when page scroll
+  },
+  onResize() {
+    // Do something when page resize
+  },
+  onTabItemTap(item) {
+    console.log(item.index)
+    console.log(item.pagePath)
+    console.log(item.text)
+  },
+  // Event handler.
+  viewTap() {
+    this.setData({
+      text: 'Set some data for updating view.'
+    }, function () {
+      // this is setData callback
+    })
+  },
+  customData: {
+    hi: 'MINA'
+  }
+})
+```
+## 调用基本的api接口
+
 # 项目搭建流程 脚手夹命令 组件写法 配置文件
 ## vue
 > 1. 利用脚手架搭建项目文件
@@ -814,6 +972,42 @@ npm run serve
 |销毁后|destoryed|componentWillUnmount|真实DOM销毁了|
 ||-|shouldComponentUpdate|组件只要更新，就会触发这个生命周期，return 布尔值，为真DOM更新，否则不更新|
 
+# git 命令
+
+
+```js
+git init//初始化仓库
+
+git diff 文件名 //是查看文件被修改过的状态，即改文件修改了什么
+
+git branch dev //是创建dev分支
+
+git checkout dev //是切换分支，把分支切换到dev上
+
+git branch //是查看分支
+```
+
+> - 整个提交上传代码的基本流程步骤：
+> 1. 第1步，工作开始前都先把代码从github库上拉取下来，更新自己的代码，避免别人修改过的代码与自己的有冲突，必须要养成这样一个良好的习惯。
+```js
+git pull 
+```
+> 2. 第2步：自己做好项目的代码后，执行
+```js
+git add .//添加所有代码到暂存区
+```
+> 3.第3步：查看添加的状态
+```js
+git status //查看当前库的状态
+```
+> 4. 第4步：提交代码
+```js
+git commit -m "备注说明" //提交代码到暂存区，这个并没有真正提交到github上面去的
+```
+> 5. 第5步：推送代码，这次是真正提交到github上面去的
+```js
+git push ##推送代码
+```
 
 # 当不使用VueX及Redux时 , 可用发布订阅者模式替代
 >发布/订阅模式就是字面意思：它定义了一种一对多的关系，让多个订阅者同时关注发布者，当发布者状态改变时，会通知所有订阅他的对象
@@ -1021,3 +1215,36 @@ class Vue {
 ```
 
 # 人事部分
+
+# 前端优化
+ 
+> 1. 精灵图
+
+> 2. css选择器优化
+> - 尽量选择使用子代选择器`>`(如`ul>li`),少使用后代选择器(如`ul li`),因为后代选择器会将所有的后代都先遍历一遍,而子代选择器就只会遍历子代，大大缩小了范围
+
+> 3. js改变样式直接操作类名
+> - 不要直接通过`style`添加样式，每一次添加样式时，页面都会重绘一次，直接操作类名只会引起一次重绘，通过`style`添加多个样式会引起多个重绘
+
+> 按需加载、图片懒加载
+
+
+# Css兼容:
+> - 低版本常见问题: css
+1 当图片加 在 IE会出现边框；解决办法: border: 0 none；
+2 在div中插入图片，图片会在下边撑起三像素: 解决办法: img转换成块级元素；
+3 双倍浮动问题；给浮动元素添加margin会双倍显示；解决办法: 浮动元素加display: inline
+4 默认高度，低版本会出现默认高度: 解决办法: font-size: 0；
+5表单元素行高不一致: 解决: vertical-align: middle；
+6 百分比BUG 50%+50%>100%，解决 给浮动元素添加标识 clear: right clear；left
+7 鼠标指针BUG cursor: hand 只能在IE9一下；cursor: point用于ie6以上高级版本
+8 透明属性opacity: 0-1 ie8: filter: alpha（opacity 0-100） ；
+
+> - Css3 要加前缀
+1 Chrome: -webkit-；
+2 safari: -webkit- ;
+3 opera: -o-;
+4 firefox: -moz-；
+5 ie: -ms-
+
+# webpack
