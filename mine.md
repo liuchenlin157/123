@@ -556,13 +556,15 @@ f()
 eventBus，就是创建一个事件中心，相当于中转站，可以用它来传递事件和接收事件。项目比较小时，用这个比较合适。（虽然也有不少人推荐直接用VUEX，具体来说看需求咯。技术只是手段，目的达到才是王道。）
 
 ## 生命周期钩子
-> “钩子” 简单理解就是“到什么时候，做什么事”
+> “钩子” 简单理解就是"到什么时候，做什么事"
 
 > 分为四大步:编译、挂载、更新、销毁
-## 过滤器
 
-## 路由
-> hash模式 和 history模式
+## 过滤器
+> 现在都在用`函数式编程`，可以对数据进行操作
+
+## vue-router
+> `hash模式` 和 `history模式`
 
 > 1. hash模式 :在浏览器中符号`#`，#以及#后面的字符称之为hash，用`window.location.hash`读取；
 > - 特点：hash虽然在URL中，但不被包括在HTTP请求中；用来指导浏览器动作，对服务端安全无用，hash不会重加载页面。
@@ -571,11 +573,122 @@ hash 模式下，仅 hash 符号之前的内容会被包含在请求中，如 ht
 > 2. history模式 : history采用`HTML5的新特性`；且提供了两个新方法：`pushState（）、replaceState（）`可以对浏览器历史记录栈进行修改，以及`popState`事件的监听到状态变更。
 > - 特点:history 模式下，前端的 URL 必须和实际向后端发起请求的 URL 一致，如 `http://www.xxx.com/items/id`。后端如果缺少对 `/items/id` 的路由处理，将返回 404 错误。Vue-Router 官网里如此描述：“不过这种模式要玩好，还需要后台配置支持……所以呢，你要在服务端增加一个覆盖所有情况的候选资源：如果 URL 匹配不到任何静态资源，则应该返回同一个 index.html 页面，这个页面就是你 app 依赖的页面。”
 
- > - 路由守卫
+
 
  > - 路由匹配(嵌套路由、路由重定向)
+ > - 路由重定向 ==> `{ path: '/a', redirect: '/b' }` 或 `{ path: '/a', redirect: { name: 'foo' }}`
+ > 注意导航守卫并没有应用在跳转路由上，而仅仅应用在其目标上。在下面这个例子中，为 `/a `路由添加一个 `beforeEach` 或 `beforeLeave` 守卫并不会有任何效果。
+ > - 路由别名  ==> `{ path: '/a', component: A, alias: '/b' }` ; `/a `的别名是 `/b`，意味着，当用户访问 `/b` 时，URL 会保持为 `/b`，但是路由匹配则为 `/a`，就像用户访问 `/a` 一样。
+ ```js
+ // 路由配置
+import Vue from 'vue'
+// 引入路由模块
+import VueRouter from 'vue-router'
+// 显式安装该模块
+Vue.use(VueRouter)
 
- > - 路由钩子 : `afterEach`、`beforeEach`(全局钩子)、`beforeEnter `、`beforeLeave`(某一路由独享的钩子)、
+ //引入相关路由
+ import App from '../App.vue'
+
+ // 配置路由
+const routes = [
+    // 如果url的路由为 /foo，进入Foo组件
+    {
+        path: '/app',
+        // 路由命名，方便跳转
+        name: 'app',
+        component: App,
+        children: [{
+            // 嵌套路由里面的path要删掉/
+            path: 'DianYing',
+            name: 'DianYing',
+            component: DianYing,
+            // 路由传参
+            // meta: {
+            // }
+        }, {
+            // 嵌套路由里面的path要删掉/
+            path: 'XW',
+            name: 'XW',
+            component: XW,
+        },
+        ]
+    },
+    {
+        // 动态路由匹配
+        path: '/xwXiagnQing',
+        name: 'xwXiagnQing',
+        component: XwXiagnQing,
+    },
+    // 重定向路由，比如刚进页面的时候，默认跳转的路由位置
+    {
+        path: '/',
+        redirect: {
+            name: 'XW'
+        }
+    }
+]
+ ```
+ > - 路由守卫
+    > - 根据路由钩子实现
+```js
+// 实例该路由配置
+const router = new VueRouter({
+    // h5history路由模式
+    // 有兼容性的问题
+    // mode: 'history',
+    // 建议用默认的哈希模式
+    mode: 'hash',
+    routes // (缩写) 相当于 routes: routes
+})
+
+// 全局路由守卫
+router.beforeEach( (to, from, next) => {
+    let token = localStorage.getItem("token");
+    // 如果有token，否则返回登录页面
+    if (token || to.path == '/DL/deng' || to.path == '/DL/zhuCe') {
+        next()
+    } else {
+        router.push({
+            name: "deng"
+        })
+    }
+})
+//路由独享守卫
+{
+    path: '/foo',
+    component: Foo,
+    beforeEnter: (to, from, next) => {
+    // ...
+    }
+}
+```
+
+ > - 路由钩子 : 
+ > - `afterEach`、`beforeEach`(全局钩子)、
+ > - `beforeEnter `、`beforeLeave`(某一路由独享的钩子)
+ > - `beforeRouteEnter` `beforeRouteUpdate` `beforeRouteLeave`(某一组件内的路由钩子)
+ ```js
+   beforeRouteEnter (to, from, next) {
+    // 在渲染该组件的对应路由被 confirm 前调用
+    // 不！能！获取组件实例 `this`
+    // 因为当守卫执行前，组件实例还没被创建
+  },
+  beforeRouteUpdate (to, from, next) {
+    // 在当前路由改变，但是该组件被复用时调用
+    // 举例来说，对于一个带有动态参数的路径 /foo/:id，在 /foo/1 和 /foo/2 之间跳转的时候，
+    // 由于会渲染同样的 Foo 组件，因此组件实例会被复用。而这个钩子就会在这个情况下被调用。
+    // 可以访问组件实例 `this`
+  },
+  beforeRouteLeave (to, from, next) {
+    // 导航离开该组件的对应路由时调用
+    // 可以访问组件实例 `this`
+  }
+ ```
+
+### route与router的区别
+> 1. `router`为VueRouter的实例，相当于一个全局的路由器对象，里面含有很多属性和子对象，例如history对象。经常用的跳转链接就可以用`this.$router.push`
+> 2. `route`相当于当前正在跳转的路由对象。可以从里面获取name、path、params、query等。
 
 ## VueX
 > `Vuex 是一个专为 Vue.js 应用程序开发的状态管理模式`; 是为了更好的解决 vue 数据传输，比如当多个视图依赖同一个状态或者来自不同视图的行为需要变更同一状态。
@@ -684,10 +797,82 @@ export default store
        var type =  this.$store.getters.getNewsType;
 ```
 
+
+## 组件
+> 分为三部分 `template` ; `script` ; `style`(在标签里加上`scoped`表示只在当前组件起作用)
+```js
+<template>
+    <div>
+        <img src="https://source.unsplash.com/375x200/?people">
+        <img src="https://source.unsplash.com/375x200/?arts-culture">
+        <img src="https://source.unsplash.com/375x200/?fashion">
+        <img src="https://source.unsplash.com/375x200/weekly?water">
+        <img src="https://source.unsplash.com/375x200/?travel">
+    </div>
+</template>
+
+<script>
+// import carouselImg1 from "../assets/images/1.jpg";
+// import carouselImg2 from "../assets/images/2.jpg";
+// import carouselImg3 from "../assets/images/3.jpg";
+// import carouselImg4 from "../assets/images/4.jpg";
+
+export default {
+  data() {
+    return {
+      // carouselImg1,
+      // carouselImg2,
+      // carouselImg3,
+      // carouselImg4
+    };
+  },
+  beforeCreate(){
+      
+  }
+
+};
+</script>
+
+<style scoped>
+
+img {
+  height: 200px;
+}
+</style>
+```
+
+## 路由懒加载与组件懒加载
+
+### 路由懒加载
+
+> 1. 为给客户更好的客户体验，首屏组件加载速度更快一些，解决白屏问题。可以有效的分担首页所承担的加载压力，减少首页加载用时
+> 2. 懒加载简单来说就是延迟加载或按需加载，即在需要的时候的时候进行加载。
+> - vue异步组件实现懒加载,方法如下
+```js
+ //不在需要引入相关路由 ==> import App from '../App.vue'
+      {
+ //     动态路由匹配
+        path: '/App',
+        name: 'App',
+ //     component: App,
+        component:resolve=>(require(['../App.vue'])，resolve)
+    }
+```
+> - ES 提出的import方法，（------最常用------）方法如下
+```js
+ //改变引入相关路由的方式 ==> import App from '../App.vue'
+const HelloWorld = （）=>import('../App.vue')  //不加 { } ，表示直接return
+```
+
+### 组件懒加载
+> - 简而言之，跟`路由懒加载`是一样的原理，将引入方式改变
+
+> -  组件开发时， 如果根页面没有导入组件的情况下，而是在其他异步加载页面中同时用到组件， 那么为实现资源的最大利用，在协同开发的时候全部人都使用异步加载组件
+
 ## 坑
  Q1:在某一组件内定义了某一事件(如下拉刷新事件)，在事件进行但还未完成时，路由跳转使该组件销毁，该下拉刷新事件仍会继续执行，未被销毁 
 
-> 需要在该组件的销毁阶段将该事件手动销毁 `window.removeEventListener` ; 自己写的事件监听也需要销毁`off`。
+> 需要在该组件的销毁阶段将该事件手动销毁 `window.removeEventListener`; 自己写的事件监听也需要销毁`off`。
 
 # React
 [文档](https://blog.csdn.net/junjun0501/article/details/81221799)
@@ -1248,3 +1433,4 @@ class Vue {
 5 ie: -ms-
 
 # webpack
+
